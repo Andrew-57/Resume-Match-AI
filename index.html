@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ResumeAI — 3D Resume Analyzer & Job Compatibility</title>
+  <meta name="description"
+    content="AI-powered 3D resume analyzer and job compatibility checker. Upload your resume and job description to get instant compatibility scores and improvement suggestions." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="index.css?v=1.3" />
+</head>
+
+<body>
+  <!-- Progressive Enhancement / No-JS Fallback -->
+  <noscript>
+    <div style="background: #fee2e2; color: #991b1b; padding: 1rem; text-align: center; font-family: sans-serif; position: relative; z-index: 1000;">
+      <strong>JavaScript is disabled.</strong> ResumeAI requires JavaScript to function. 
+      Please enable JavaScript in your browser settings to analyze your resume.
+    </div>
+  </noscript>
+
+  <!-- Three.js 3D Background Canvas -->
+  <canvas id="bg-canvas"></canvas>
+
+  <!-- Floating Particles Overlay -->
+  <div id="particles-overlay"></div>
+
+  <!-- Navigation -->
+  <nav id="main-nav">
+    <div class="nav-brand">
+      <div class="brand-icon">
+        <svg viewBox="0 0 32 32" fill="none">
+          <path d="M16 2L2 9L16 16L30 9L16 2Z" fill="url(#grad1)" opacity="0.9" />
+          <path d="M2 23L16 30L30 23" stroke="url(#grad2)" stroke-width="2" fill="none" />
+          <path d="M2 16L16 23L30 16" stroke="url(#grad2)" stroke-width="2" fill="none" />
+          <defs>
+            <linearGradient id="grad1" x1="2" y1="2" x2="30" y2="16">
+              <stop stop-color="#6366f1" />
+              <stop offset="1" stop-color="#a855f7" />
+            </linearGradient>
+            <linearGradient id="grad2" x1="2" y1="16" x2="30" y2="30">
+              <stop stop-color="#6366f1" />
+              <stop offset="1" stop-color="#ec4899" />
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+      <span class="brand-text">Resume<span class="brand-highlight">AI</span></span>
+    </div>
+
+    <div class="nav-status">
+      <div class="status-dot"></div>
+      <span>AI Ready</span>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section id="hero">
+    <div class="hero-content">
+      <div class="hero-badge">
+        <span class="badge-pulse"></span>
+        <span>AI-Powered Analysis</span>
+      </div>
+      <h1 class="hero-title">
+        <span class="title-line">Analyze Your</span>
+        <span class="title-line gradient-text">Resume</span>
+      </h1>
+      <p class="hero-subtitle">Upload your resume and job description to get instant AI-powered compatibility scores,
+        skill gap analysis, and personalized improvement suggestions.</p>
+      <button id="start-btn" class="hero-cta">
+        <span>Start Analysis</span>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M5 12h14M12 5l7 7-7 7" />
+        </svg>
+      </button>
+    </div>
+    <div class="hero-3d-object" id="hero-3d"></div>
+  </section>
+
+  <!-- Analyze Section -->
+  <section id="analyze">
+    <div class="section-header">
+      <h2 class="section-title">Input <span class="gradient-text">Data</span></h2>
+      <p class="section-desc">Upload your resume and paste the target job description</p>
+    </div>
+
+    <div class="analyze-grid">
+      <!-- Resume Upload Panel -->
+      <div class="input-panel glass-card" id="resume-panel">
+        <div class="panel-header">
+          <div class="panel-icon resume-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+              <polyline points="14,2 14,8 20,8" />
+              <line x1="16" y1="13" x2="8" y2="13" />
+              <line x1="16" y1="17" x2="8" y2="17" />
+              <polyline points="10,9 9,9 8,9" />
+            </svg>
+          </div>
+          <div style="flex-grow: 1;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <h3 class="panel-title">Resume</h3>
+            </div>
+            <p class="panel-subtitle">Upload your resume file or paste text</p>
+          </div>
+        </div>
+
+        <div id="resume-upload-wrapper">
+          <!-- Upload Drop Zone -->
+          <div class="upload-zone" id="resume-upload-zone" role="button" tabindex="0" aria-label="Drop your resume here or click to upload">
+            <div class="upload-icon">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                <polyline points="17,8 12,3 7,8" />
+                <line x1="12" y1="3" x2="12" y2="15" />
+              </svg>
+            </div>
+            <p class="upload-text">Drop your resume here or click to upload</p>
+            <p class="upload-hint">Supports PDF, DOCX, TXT, RTF, HTML, MD, and more</p>
+            <input type="file" id="resume-file-input" accept=".txt,.pdf,.doc,.docx,.rtf,.odt,.md,.html,.htm,.csv,.json,.xml" hidden aria-hidden="true" />
+          </div>
+
+          <!-- Attached File Preview (hidden until file is loaded) -->
+          <div class="file-attachment hidden" id="file-attachment">
+            <div class="file-attachment-icon" id="file-attachment-icon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+                <polyline points="14,2 14,8 20,8" />
+              </svg>
+            </div>
+            <div class="file-attachment-info">
+              <span class="file-attachment-name" id="file-attachment-name">resume.pdf</span>
+              <span class="file-attachment-meta" id="file-attachment-meta">PDF · 128 KB</span>
+            </div>
+            <div class="file-attachment-status" id="file-attachment-status">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M22 11.08V12a10 10 0 11-5.93-9.14" />
+                <polyline points="22,4 12,14.01 9,11.01" />
+              </svg>
+              <span>Ready</span>
+            </div>
+            <button class="file-attachment-remove" id="file-remove-btn" title="Remove file">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="divider-or">OR</div>
+
+        <!-- Paste Text Zone -->
+        <div id="resume-text-wrapper">
+          <textarea id="resume-text" class="input-textarea" placeholder="Paste your resume here..." rows="8"></textarea>
+          <div class="char-count"><span id="resume-char-count">0</span> characters</div>
+        </div>
+      </div>
+
+      <!-- Job Description Input Panel -->
+      <div class="input-panel glass-card" id="job-panel">
+        <div class="panel-header">
+          <div class="panel-icon job-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
+              <path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2" />
+              <line x1="12" y1="12" x2="12" y2="16" />
+              <line x1="10" y1="14" x2="14" y2="14" />
+            </svg>
+          </div>
+          <div>
+            <h3 class="panel-title">Job Description</h3>
+            <p class="panel-subtitle">Paste the target job posting</p>
+          </div>
+        </div>
+        <textarea id="job-text" class="input-textarea"
+          placeholder="Paste the job description here...&#10;&#10;Example:&#10;We are looking for a Senior Software Engineer...&#10;&#10;Requirements:&#10;- 5+ years of experience in web development&#10;- Proficiency in React, Node.js, TypeScript&#10;- Experience with cloud services (AWS/GCP)&#10;- Strong problem-solving skills..."
+          rows="18"></textarea>
+        <div class="char-count"><span id="job-char-count">0</span> characters</div>
+      </div>
+    </div>
+
+    <!-- Analyze Button -->
+    <div class="analyze-action">
+      <button id="analyze-btn" class="btn-analyze">
+        <div class="btn-content">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M12 6v6l4 2" />
+          </svg>
+          <span>Analyze Compatibility</span>
+        </div>
+        <div class="btn-loader" id="btn-loader">
+          <div class="loader-ring"></div>
+          <span>Analyzing...</span>
+        </div>
+      </button>
+    </div>
+  </section>
+
+  <!-- Results Section -->
+  <section id="results" class="hidden">
+    <div class="section-header">
+      <h2 class="section-title">Analysis <span class="gradient-text">Results</span></h2>
+      <p class="section-desc">Your AI-powered resume compatibility report</p>
+    </div>
+
+    <!-- Overall Score -->
+    <div class="score-hero glass-card" id="score-hero">
+      <div class="score-ring-container">
+        <svg class="score-ring" viewBox="0 0 200 200">
+          <circle class="score-ring-bg" cx="100" cy="100" r="85" />
+          <circle class="score-ring-fill" id="score-ring-fill" cx="100" cy="100" r="85" />
+        </svg>
+        <div class="score-value">
+          <span class="score-number" id="score-number">0</span>
+          <span class="score-percent">%</span>
+        </div>
+        <div class="score-label">Compatibility</div>
+      </div>
+      <div class="score-details">
+        <h3 class="score-title" id="score-title">Overall Match</h3>
+        <p class="score-description" id="score-description">Calculating your compatibility score...</p>
+        <div class="score-badges" id="score-badges"></div>
+      </div>
+    </div>
+
+    <!-- Metrics Grid -->
+    <div class="metrics-grid" id="metrics-grid">
+      <!-- Skill Match -->
+      <div class="metric-card glass-card" data-metric="skills">
+        <div class="metric-header">
+          <div class="metric-icon skill-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <polygon
+                points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" />
+            </svg>
+          </div>
+          <div>
+            <h4 class="metric-title">Skill Match</h4>
+            <p class="metric-value" id="skill-match-value">0%</p>
+          </div>
+        </div>
+        <div class="metric-bar">
+          <div class="metric-bar-fill" id="skill-bar" style="width:0%"></div>
+        </div>
+        <div class="metric-details" id="skill-details"></div>
+      </div>
+
+      <!-- Experience Match -->
+      <div class="metric-card glass-card" data-metric="experience">
+        <div class="metric-header">
+          <div class="metric-icon exp-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+            </svg>
+          </div>
+          <div>
+            <h4 class="metric-title">Experience</h4>
+            <p class="metric-value" id="exp-match-value">0%</p>
+          </div>
+        </div>
+        <div class="metric-bar">
+          <div class="metric-bar-fill exp-bar" id="exp-bar" style="width:0%"></div>
+        </div>
+        <div class="metric-details" id="exp-details"></div>
+      </div>
+
+      <!-- Education Match -->
+      <div class="metric-card glass-card" data-metric="education">
+        <div class="metric-header">
+          <div class="metric-icon edu-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
+              <path d="M6 12v5c3 3 9 3 12 0v-5" />
+            </svg>
+          </div>
+          <div>
+            <h4 class="metric-title">Education</h4>
+            <p class="metric-value" id="edu-match-value">0%</p>
+          </div>
+        </div>
+        <div class="metric-bar">
+          <div class="metric-bar-fill edu-bar" id="edu-bar" style="width:0%"></div>
+        </div>
+        <div class="metric-details" id="edu-details"></div>
+      </div>
+
+      <!-- Keyword Match -->
+      <div class="metric-card glass-card" data-metric="keywords">
+        <div class="metric-header">
+          <div class="metric-icon key-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5" />
+              <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
+            </svg>
+          </div>
+          <div>
+            <h4 class="metric-title">Keywords</h4>
+            <p class="metric-value" id="key-match-value">0%</p>
+          </div>
+        </div>
+        <div class="metric-bar">
+          <div class="metric-bar-fill key-bar" id="key-bar" style="width:0%"></div>
+        </div>
+        <div class="metric-details" id="key-details"></div>
+      </div>
+    </div>
+
+    <!-- Skills Breakdown -->
+    <div class="skills-section">
+      <div class="skills-panel glass-card">
+        <h3 class="skills-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 11.08V12a10 10 0 11-5.93-9.14" />
+            <polyline points="22,4 12,14.01 9,11.01" />
+          </svg>
+          Matched Skills & Keywords
+        </h3>
+        <div class="skills-tags" id="matched-skills"></div>
+      </div>
+      <div class="skills-panel glass-card">
+        <h3 class="skills-title missing">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10" />
+            <line x1="15" y1="9" x2="9" y2="15" />
+            <line x1="9" y1="9" x2="15" y2="15" />
+          </svg>
+          Missing Skills & Keywords
+        </h3>
+        <div class="skills-tags" id="missing-skills"></div>
+      </div>
+    </div>
+
+    <!-- Recommendations -->
+    <div class="recommendations glass-card" id="recommendations">
+      <h3 class="rec-title">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M9 18V5l12-2v13" />
+          <circle cx="6" cy="18" r="3" />
+          <circle cx="18" cy="16" r="3" />
+        </svg>
+        AI Recommendations
+      </h3>
+      <div class="rec-list" id="rec-list"></div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="results-actions">
+      <button id="reset-btn" class="btn-secondary">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="1,4 1,10 7,10" />
+          <path d="M3.51 15a9 9 0 102.13-9.36L1 10" />
+        </svg>
+        New Analysis
+      </button>
+      <button id="export-btn" class="btn-primary">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+          <polyline points="7,10 12,15 17,10" />
+          <line x1="12" y1="15" x2="12" y2="3" />
+        </svg>
+        Export Report
+      </button>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer id="footer">
+    <div class="footer-content">
+      <p>&copy; 2026 ResumeAI — AI-Powered Resume Analysis</p>
+    </div>
+  </footer>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="toast hidden" role="alert" aria-live="assertive">
+    <div class="toast-icon"></div>
+    <span class="toast-msg"></span>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
+
+</html>

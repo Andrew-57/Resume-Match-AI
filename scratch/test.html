@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+.analyze-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+.input-panel {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid black;
+  padding: 10px;
+}
+.input-textarea {
+  flex-grow: 1;
+  resize: none;
+}
+</style>
+</head>
+<body>
+<div class="analyze-grid">
+  <div class="input-panel">
+    <div style="height: 100px; background: red;">Header</div>
+    <textarea class="input-textarea" style="height: 500px;"></textarea>
+    <div>0 chars</div>
+  </div>
+  <div class="input-panel">
+    <div style="height: 50px; background: blue;">Header</div>
+    <textarea class="input-textarea"></textarea>
+    <div>0 chars</div>
+  </div>
+</div>
+</body>
+</html>
