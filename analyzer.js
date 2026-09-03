@@ -184,7 +184,7 @@ function calculateBaseATSScore(normalizedResume, role) {
     const count = (normalizedResume.match(regex) || []).length;
     if (count > 0) {
       matched.push(kw);
-      score += Math.min(count, 3) * keywords.weights.must_have; // Cap at 3 mentions
+      score += keywords.weights.must_have; // 1 mention gives full base points
     } else {
       missing.push(kw);
     }
@@ -197,7 +197,7 @@ function calculateBaseATSScore(normalizedResume, role) {
     const count = (normalizedResume.match(regex) || []).length;
     if (count > 0) {
       matched.push(kw);
-      score += Math.min(count, 2) * keywords.weights.nice_to_have; // Cap at 2 mentions
+      score += keywords.weights.nice_to_have; // 1 mention gives full base points
     } else {
       missing.push(kw);
     }
@@ -232,12 +232,12 @@ function calculateFinalATSScore(resumeText, jdText) {
   
   if (normSkillsSection.length > 0) {
     skillsSectionResult = calculateBaseATSScore(normSkillsSection, role);
-    skillsSectionResult.score *= 1.5;
+    skillsSectionResult.score = Math.min(100, skillsSectionResult.score * 1.2); // Cap at 100
   } else {
     skillsSectionResult = baseResult;
   }
 
-  const overallATSScore = Math.min(100, Math.round((skillsSectionResult.score + baseResult.score) / 2));
+  const overallATSScore = Math.round((skillsSectionResult.score + baseResult.score) / 2);
   
   // Combine matched/missing from both
   const matchedSet = new Set([...baseResult.matched, ...skillsSectionResult.matched]);
